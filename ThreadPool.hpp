@@ -20,6 +20,7 @@ private:
     // synchronization
     std::mutex queue_mutex;
     std::condition_variable condition;
+    std::condition_variable condition_producers;
     bool stop;
 };
 
@@ -43,6 +44,9 @@ inline ThreadPool::ThreadPool(size_t threads)
                             return;
                         task = std::move(this->tasks.front());
                         this->tasks.pop();
+                        if (tasks.empty()) {
+                            condition_producers.notify_one(); // notify the destructor that the queue is empty
+                        }
                     }
 
                     task();
